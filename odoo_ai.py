@@ -13,12 +13,12 @@ class OdooModelCreator:
     def create_model_file(self):
         model_file_name = f"{self.model_name.replace('.', '_')}.py"
         model_file_path = os.path.join(self.module_path, 'models', model_file_name)
-        
+
         self.generate_model_code()
 
         with open(model_file_path, 'w') as model_file:
             model_file.write(self.model_code)
-        
+
         print(f"Model file created: {model_file_path}")
         self.update_init_file(model_file_name)
 
@@ -44,25 +44,72 @@ class {self.model_name.replace('.', '_').capitalize()}(models.Model):
             raise ValueError(f"Field '{field['name']}' of type '{field['type']}' must have a valid relation defined in 'options'.")
 
     def add_field_to_model(self, field):
-        field_name = field['name']
         field_type = field['type']
-        field_options = field.get('options', [])
-
-        if field_type == 'Selection':
-            options = ", ".join([f"('{opt}', '{opt.capitalize()}')" for opt in field_options])
-            self.model_code += f"    {field_name} = fields.{field_type}([\n        {options}\n    ], string='{field_name.capitalize()}')\n"
-        elif field_type in ['Many2one', 'One2many', 'Many2many']:
-            relation_model = field_options[0] if field_options else 'model.related'
-            self.model_code += f"    {field_name} = fields.{field_type}('{relation_model}', string='{field_name.capitalize()}')\n"
-        elif field_type == 'Computed':
-            compute_method = field.get('compute_method', 'compute_method_name')
-            self.model_code += f"    {field_name} = fields.{field_type}(string='{field_name.capitalize()}', compute='{compute_method}')\n"
-            self.compute_methods.append(f"    def {compute_method}(self):\n        # TODO: Implement computation for {field_name}\n        pass\n")
-        elif field_type == 'Related':
-            related_field = field.get('related_field', 'model.related.field')
-            self.model_code += f"    {field_name} = fields.{field_type}('{related_field}', string='{field_name.capitalize()}')\n"
+        if hasattr(self, f'add_{field_type.lower()}'):
+            method = getattr(self, f'add_{field_type.lower()}')
+            self.model_code += method(field)
         else:
-            self.model_code += f"    {field_name} = fields.{field_type}('{field_name.capitalize()}')\n"
+            raise ValueError(f"Unsupported field type: {field_type}")
+
+    def add_selection(self, field):
+        field_name = field['name']
+        options = ", ".join([f"('{opt}', '{opt.capitalize()}')" for opt in field.get('options', [])])
+        return f"    {field_name} = fields.Selection([\n        {options}\n    ], string='{field_name.capitalize()}')\n"
+
+    def add_many2one(self, field):
+        field_name = field['name']
+        relation_model = field.get('options', ['model.related'])[0]
+        return f"    {field_name} = fields.Many2one('{relation_model}', string='{field_name.capitalize()}')\n"
+
+    def add_one2many(self, field):
+        field_name = field['name']
+        relation_model = field.get('options', ['model.related'])[0]
+        return f"    {field_name} = fields.One2many('{relation_model}', string='{field_name.capitalize()}')\n"
+
+    def add_many2many(self, field):
+        field_name = field['name']
+        relation_model = field.get('options', ['model.related'])[0]
+        return f"    {field_name} = fields.Many2many('{relation_model}', string='{field_name.capitalize()}')\n"
+
+    def add_computed(self, field):
+        field_name = field['name']
+        compute_method = field.get('compute_method', 'compute_method_name')
+        self.compute_methods.append(f"    def {compute_method}(self):\n        # TODO: Implement computation for {field_name}\n        pass\n")
+        return f"    {field_name} = fields.Computed(string='{field_name.capitalize()}', compute='{compute_method}')\n"
+
+    def add_related(self, field):
+        field_name = field['name']
+        related_field = field.get('related_field', 'model.related.field')
+        return f"    {field_name} = fields.Related('{related_field}', string='{field_name.capitalize()}')\n"
+
+    def add_binary(self, field):
+        field_name = field['name']
+        return f"    {field_name} = fields.Binary(string='{field_name.capitalize()}')\n"
+
+    def add_float(self, field):
+        field_name = field['name']
+        return f"    {field_name} = fields.Float(string='{field_name.capitalize()}')\n"
+
+    def add_integer(self, field):
+        field_name = field['name']
+        return f"    {field_name} = fields.Integer(string='{field_name.capitalize()}')\n"
+
+    def add_boolean(self, field):
+        field_name = field['name']
+        return f"    {field_name} = fields.Boolean(string='{field_name.capitalize()}')\n"
+
+    def add_monetary(self, field):
+        field_name = field['name']
+        currency_field = field.get('currency_field', 'currency_id')  # default currency field
+        return f"    {field_name} = fields.Monetary(string='{field_name.capitalize()}', currency_field='{currency_field}')\n"
+
+    def add_date(self, field):
+        field_name = field['name']
+        return f"    {field_name} = fields.Date(string='{field_name.capitalize()}')\n"
+
+    def add_datetime(self, field):
+        field_name = field['name']
+        return f"    {field_name} = fields.Datetime(string='{field_name.capitalize()}')\n"
 
     def update_init_file(self, model_file_name):
         init_file_path = os.path.join(self.module_path, 'models', '__init__.py')
@@ -83,7 +130,8 @@ def print_documentation():
             "string": "Field Label",  // Optional
             "required": true,  // Optional
             "default": "default_value",  // Optional
-            "compute_method": "compute_method_name"  // Required for Computed fields
+            "compute_method": "compute_method_name",  // Required for Computed fields
+            "currency_field": "currency_id"  // Optional for Monetary fields
         }
     ]
 }""")
