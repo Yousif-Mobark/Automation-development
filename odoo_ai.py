@@ -63,6 +63,14 @@ class {self.model_name.replace('.', '_').capitalize()}(models.Model):
                 f"strip_style={field.get('strip_style', False)}, "
                 f"strip_classes={field.get('strip_classes', False)})\n")
 
+    def add_image(self, field):
+        field_name = field['name']
+        return (f"    {field_name} = fields.Image("
+                f"string='{field.get('string')}', "
+                f"max_width={field.get('max_width', 0)}, "
+                f"max_height={field.get('max_height', 0)}, "
+                f"verify_resolution={field.get('verify_resolution', True)})\n")
+
     def add_selection(self, field):
         field_name = field['name']
         options = ", ".join([f"('{opt}', '{opt.capitalize()}')" for opt in field.get('options', [])])
@@ -74,7 +82,6 @@ class {self.model_name.replace('.', '_').capitalize()}(models.Model):
         return f"    {field_name} = fields.Many2one('{relation_model}', string='{field.get('string')}', readonly={field.get('readonly', False)}, required={field.get('required', False)})\n"
 
     # Other field methods...
-
     def add_float(self, field):
         field_name = field['name']
         return f"    {field_name} = fields.Float(string='{field.get('string')}', default={field.get('default', 0)}, readonly={field.get('readonly', False)}, required={field.get('required', False)})\n"
@@ -118,7 +125,7 @@ def print_documentation():
     "fields": [
         {
             "name": "field_name",
-            "type": "field_type",  // e.g., "Char", "Html", "Many2one", etc.
+            "type": "field_type",  // e.g., "Char", "Image", "Many2one", etc.
             "string": "Field Label",  // Optional
             "readonly": true,  // Optional
             "required": false,  // Optional
@@ -126,6 +133,9 @@ def print_documentation():
             "compute": "compute_method_name",  // Optional for computed fields
             "index": "btree",  // Optional for indexing
             "help": "Tooltip text",  // Optional tooltip
+            "max_width": 1024,  // Optional for Image fields
+            "max_height": 768,  // Optional for Image fields
+            "verify_resolution": true  // Optional for Image fields
             "sanitize": true,  // Optional for Html fields
             "sanitize_overridable": false,  // Optional for Html fields
             "sanitize_tags": true,  // Optional for Html fields
@@ -133,6 +143,7 @@ def print_documentation():
             "sanitize_style": false,  // Optional for Html fields
             "strip_style": false,  // Optional for Html fields
             "strip_classes": false  // Optional for Html fields
+
         }
     ]
 }""")
