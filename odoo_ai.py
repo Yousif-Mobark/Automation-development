@@ -54,62 +54,44 @@ class {self.model_name.replace('.', '_').capitalize()}(models.Model):
     def add_selection(self, field):
         field_name = field['name']
         options = ", ".join([f"('{opt}', '{opt.capitalize()}')" for opt in field.get('options', [])])
-        return f"    {field_name} = fields.Selection([\n        {options}\n    ], string='{field_name.capitalize()}')\n"
+        return f"    {field_name} = fields.Selection([\n        {options}\n    ], string='{field.get('string')}', default='{field.get('default')}', help='{field.get('help')}', readonly={field.get('readonly', False)}, required={field.get('required', False)})\n"
 
     def add_many2one(self, field):
         field_name = field['name']
         relation_model = field.get('options', ['model.related'])[0]
-        return f"    {field_name} = fields.Many2one('{relation_model}', string='{field_name.capitalize()}')\n"
+        return f"    {field_name} = fields.Many2one('{relation_model}', string='{field.get('string')}', readonly={field.get('readonly', False)}, required={field.get('required', False)})\n"
 
-    def add_one2many(self, field):
-        field_name = field['name']
-        relation_model = field.get('options', ['model.related'])[0]
-        return f"    {field_name} = fields.One2many('{relation_model}', string='{field_name.capitalize()}')\n"
-
-    def add_many2many(self, field):
-        field_name = field['name']
-        relation_model = field.get('options', ['model.related'])[0]
-        return f"    {field_name} = fields.Many2many('{relation_model}', string='{field_name.capitalize()}')\n"
-
-    def add_computed(self, field):
-        field_name = field['name']
-        compute_method = field.get('compute_method', 'compute_method_name')
-        self.compute_methods.append(f"    def {compute_method}(self):\n        # TODO: Implement computation for {field_name}\n        pass\n")
-        return f"    {field_name} = fields.Computed(string='{field_name.capitalize()}', compute='{compute_method}')\n"
-
-    def add_related(self, field):
-        field_name = field['name']
-        related_field = field.get('related_field', 'model.related.field')
-        return f"    {field_name} = fields.Related('{related_field}', string='{field_name.capitalize()}')\n"
-
-    def add_binary(self, field):
-        field_name = field['name']
-        return f"    {field_name} = fields.Binary(string='{field_name.capitalize()}')\n"
-
+    # Additional methods for other field types...
     def add_float(self, field):
         field_name = field['name']
-        return f"    {field_name} = fields.Float(string='{field_name.capitalize()}')\n"
+        return f"    {field_name} = fields.Float(string='{field.get('string')}', default={field.get('default', 0)}, readonly={field.get('readonly', False)}, required={field.get('required', False)})\n"
 
     def add_integer(self, field):
         field_name = field['name']
-        return f"    {field_name} = fields.Integer(string='{field_name.capitalize()}')\n"
+        return f"    {field_name} = fields.Integer(string='{field.get('string')}', default={field.get('default', 0)}, readonly={field.get('readonly', False)}, required={field.get('required', False)})\n"
 
     def add_boolean(self, field):
         field_name = field['name']
-        return f"    {field_name} = fields.Boolean(string='{field_name.capitalize()}')\n"
+        return f"    {field_name} = fields.Boolean(string='{field.get('string')}', default={field.get('default', False)})\n"
+
+    def add_binary(self, field):
+        field_name = field['name']
+        return f"    {field_name} = fields.Binary(string='{field.get('string')}')\n"
 
     def add_monetary(self, field):
         field_name = field['name']
         currency_field = field.get('currency_field', 'currency_id')  # default currency field
-        return f"    {field_name} = fields.Monetary(string='{field_name.capitalize()}', currency_field='{currency_field}')\n"
+        return f"    {field_name} = fields.Monetary(string='{field.get('string')}', currency_field='{currency_field}')\n"
 
     def add_date(self, field):
         field_name = field['name']
-        return f"    {field_name} = fields.Date(string='{field_name.capitalize()}')\n"
+        return f"    {field_name} = fields.Date(string='{field.get('string')}', readonly={field.get('readonly', False)})\n"
 
     def add_datetime(self, field):
         field_name = field['name']
-        return f"    {field_name} = fields.Datetime(string='{field_name.capitalize()}')\n"
+        return f"    {field_name} = fields.Datetime(string='{field.get('string')}', readonly={field.get('readonly', False)})\n"
+
+    # Other field methods...
 
     def update_init_file(self, model_file_name):
         init_file_path = os.path.join(self.module_path, 'models', '__init__.py')
@@ -126,12 +108,13 @@ def print_documentation():
         {
             "name": "field_name",
             "type": "field_type",  // e.g., "Char", "Many2one", "Selection", etc.
-            "options": ["option1", "option2"],  // Required for Selection and relation fields
             "string": "Field Label",  // Optional
-            "required": true,  // Optional
+            "readonly": true,  // Optional
+            "required": false,  // Optional
             "default": "default_value",  // Optional
-            "compute_method": "compute_method_name",  // Required for Computed fields
-            "currency_field": "currency_id"  // Optional for Monetary fields
+            "compute": "compute_method_name",  // Optional for computed fields
+            "index": "btree",  // Optional for indexing
+            "help": "Tooltip text"  // Optional tooltip
         }
     ]
 }""")
