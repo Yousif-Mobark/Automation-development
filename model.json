@@ -1,0 +1,84 @@
+{
+    "model_name": "your.model.name",
+    "fields": [
+        {
+            "name": "name",
+            "type": "Char",
+            "string": "Username",
+            "readonly": true,
+            "required": false,
+            "compute": "compute_name"
+        },
+        {
+            "name": "description",
+            "type": "Text",
+            "string": "Description",
+            "help": "A brief description of the record."
+        },
+        {
+            "name": "date_created",
+            "type": "Date",
+            "string": "Date Created",
+            "readonly": true,
+            "required": true
+        },
+        {
+            "name": "amount",
+            "type": "Float",
+            "string": "Amount",
+            "default": 0.0,
+            "index": "btree"
+        },
+        {
+            "name": "quantity",
+            "type": "Integer",
+            "string": "Quantity",
+            "default": 1,
+            "required": true
+        },
+        {
+            "name": "is_active",
+            "type": "Boolean",
+            "string": "Is Active",
+            "default": true,
+            "index": true
+        },
+        {
+            "name": "image",
+            "type": "Binary",
+            "string": "Image"
+        },
+        {
+            "name": "category_id",
+            "type": "Many2one",
+            "options": ["your.category.model"],
+            "string": "Category",
+            "required": true
+        },
+        {
+            "name": "tags",
+            "type": "Many2many",
+            "options": ["your.tag.model"],
+            "string": "Tags"
+        },
+        {
+            "name": "status",
+            "type": "Selection",
+            "options": ["draft", "confirmed", "done"],
+            "string": "Status",
+            "default": "draft"
+        },
+        {
+            "name": "price",
+            "type": "Monetary",
+            "string": "Price",
+            "currency_field": "currency_id"
+        },
+        {
+            "name": "start_datetime",
+            "type": "Datetime",
+            "string": "Start DateTime",
+            "help": "The starting date and time."
+        }
+    ]
+}
