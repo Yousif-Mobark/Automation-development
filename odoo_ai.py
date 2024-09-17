@@ -81,6 +81,53 @@ class {self.model_name.replace('.', '_').capitalize()}(models.Model):
         relation_model = field.get('options', ['model.related'])[0]
         return f"    {field_name} = fields.Many2one('{relation_model}', string='{field.get('string')}', readonly={field.get('readonly', False)}, required={field.get('required', False)})\n"
 
+    def add_one2many(self, field):
+        field_name = field['name']
+        comodel_name = field.get('options', ['model.related'])[0]
+        inverse_name = field['inverse_name']
+        domain = field.get('domain', '[]')
+        context = field.get('context', '{}')
+        auto_join = field.get('auto_join', False)
+
+        return (f"    {field_name} = fields.One2many("
+                f"comodel_name='{comodel_name}', "
+                f"inverse_name='{inverse_name}', "
+            f"domain={domain}, "
+            f"context={context}, "
+            f"auto_join={auto_join}, "
+            f"string='{field.get('string')}')\n")
+    def add_many2many(self, field):
+        field_name = field['name']
+        comodel_name = field.get('options', ['model.related'])[0]
+
+        parameters = [f"comodel_name='{comodel_name}'"]
+
+        if 'relation' in field:
+            parameters.append(f"relation='{field['relation']}'")
+        else:
+            parameters.append(f"relation='{self.model_name.replace('.', '_')}_{field_name}_rel'")
+
+        if 'column1' in field:
+            parameters.append(f"column1='{field['column1']}'")
+        else:
+            parameters.append(f"column1='{self.model_name.replace('.', '_')}_id'")
+
+        if 'column2' in field:
+            parameters.append(f"column2='{field['column2']}'")
+        else:
+            parameters.append(f"column2='{comodel_name.replace('.', '_')}_id'")
+
+        if 'domain' in field:
+            parameters.append(f"domain={field['domain']}")
+        if 'context' in field:
+            parameters.append(f"context={field['context']}")
+        if 'check_company' in field:
+            parameters.append(f"check_company={field['check_company']}")
+
+        return (f"    {field_name} = fields.Many2many("
+                f"{', '.join(parameters)}, "
+                f"string='{field.get('string')}'"
+                f")\n")   
     # Other field methods...
     def add_float(self, field):
         field_name = field['name']

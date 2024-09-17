@@ -11,6 +11,18 @@
         },
         {
             "name": "description",
+            "type": "Html",
+            "string": "Description",
+            "sanitize": true,
+            "sanitize_overridable": false,
+            "sanitize_tags": true,
+            "sanitize_attributes": true,
+            "sanitize_style": false,
+            "strip_style": false,
+            "strip_classes": false
+        },
+        {
+            "name": "note",
             "type": "Text",
             "string": "Description",
             "help": "A brief description of the record."
@@ -49,11 +61,41 @@
             "string": "Image"
         },
         {
+            "name": "profile_image",
+            "type": "Image",
+            "string": "Profile Image",
+            "max_width": 1024,
+            "max_height": 768,
+            "verify_resolution": true
+        },
+        {
             "name": "category_id",
             "type": "Many2one",
             "options": ["your.category.model"],
             "string": "Category",
             "required": true
+        },
+        {
+            "name": "child_ids",
+            "type": "One2many",
+            "options": ["your.child.model"],
+            "inverse_name": "parent_id",
+            "string": "Child Records",
+            "domain": "[('active', '=', True)]",
+            "context": {"key": "value"},
+            "auto_join": false
+        },
+        {
+            "name": "tag_ids",
+            "type": "Many2many",
+            "options": ["your.tag.model"],
+            "relation": "your_model_tag_rel",
+            "column1": "your_model_id",
+            "column2": "tag_id",
+            "string": "Tags",
+            "domain": "[('active', '=', True)]",
+            "context": {"key": "value"},
+            "check_company": true
         },
         {
             "name": "tags",
