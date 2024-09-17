@@ -51,6 +51,18 @@ class {self.model_name.replace('.', '_').capitalize()}(models.Model):
         else:
             raise ValueError(f"Unsupported field type: {field_type}")
 
+    def add_html(self, field):
+        field_name = field['name']
+        return (f"    {field_name} = fields.Html("
+                f"string='{field.get('string')}', "
+                f"sanitize={field.get('sanitize', True)}, "
+                f"sanitize_overridable={field.get('sanitize_overridable', False)}, "
+                f"sanitize_tags={field.get('sanitize_tags', True)}, "
+                f"sanitize_attributes={field.get('sanitize_attributes', True)}, "
+                f"sanitize_style={field.get('sanitize_style', False)}, "
+                f"strip_style={field.get('strip_style', False)}, "
+                f"strip_classes={field.get('strip_classes', False)})\n")
+
     def add_selection(self, field):
         field_name = field['name']
         options = ", ".join([f"('{opt}', '{opt.capitalize()}')" for opt in field.get('options', [])])
@@ -61,7 +73,8 @@ class {self.model_name.replace('.', '_').capitalize()}(models.Model):
         relation_model = field.get('options', ['model.related'])[0]
         return f"    {field_name} = fields.Many2one('{relation_model}', string='{field.get('string')}', readonly={field.get('readonly', False)}, required={field.get('required', False)})\n"
 
-    # Additional methods for other field types...
+    # Other field methods...
+
     def add_float(self, field):
         field_name = field['name']
         return f"    {field_name} = fields.Float(string='{field.get('string')}', default={field.get('default', 0)}, readonly={field.get('readonly', False)}, required={field.get('required', False)})\n"
@@ -91,8 +104,6 @@ class {self.model_name.replace('.', '_').capitalize()}(models.Model):
         field_name = field['name']
         return f"    {field_name} = fields.Datetime(string='{field.get('string')}', readonly={field.get('readonly', False)})\n"
 
-    # Other field methods...
-
     def update_init_file(self, model_file_name):
         init_file_path = os.path.join(self.module_path, 'models', '__init__.py')
         with open(init_file_path, 'a') as init_file:
@@ -107,14 +118,21 @@ def print_documentation():
     "fields": [
         {
             "name": "field_name",
-            "type": "field_type",  // e.g., "Char", "Many2one", "Selection", etc.
+            "type": "field_type",  // e.g., "Char", "Html", "Many2one", etc.
             "string": "Field Label",  // Optional
             "readonly": true,  // Optional
             "required": false,  // Optional
             "default": "default_value",  // Optional
             "compute": "compute_method_name",  // Optional for computed fields
             "index": "btree",  // Optional for indexing
-            "help": "Tooltip text"  // Optional tooltip
+            "help": "Tooltip text",  // Optional tooltip
+            "sanitize": true,  // Optional for Html fields
+            "sanitize_overridable": false,  // Optional for Html fields
+            "sanitize_tags": true,  // Optional for Html fields
+            "sanitize_attributes": true,  // Optional for Html fields
+            "sanitize_style": false,  // Optional for Html fields
+            "strip_style": false,  // Optional for Html fields
+            "strip_classes": false  // Optional for Html fields
         }
     ]
 }""")
