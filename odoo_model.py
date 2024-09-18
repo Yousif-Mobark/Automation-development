@@ -1,6 +1,7 @@
 import os
 import json
 import argparse
+import csv
 
 class OdooModelCreator:
     def __init__(self, model_name, fields, module_path):
@@ -10,7 +11,7 @@ class OdooModelCreator:
         self.model_code = ""
         self.compute_methods = []
 
-    def create_model_file(self):
+    def create_model_file(self, access_rights=None):
         model_file_name = f"{self.model_name.replace('.', '_')}.py"
         model_file_path = os.path.join(self.module_path, 'models', model_file_name)
 
@@ -20,6 +21,11 @@ class OdooModelCreator:
             model_file.write(self.model_code)
 
         print(f"Model file created: {model_file_path}")
+
+        if access_rights:
+            access_code = self.add_access_rights(self.model_name, access_rights)
+            self.write_access_rights_file(access_code)
+
         self.update_init_file(model_file_name)
 
     def generate_model_code(self):
@@ -92,10 +98,11 @@ class {self.model_name.replace('.', '_').capitalize()}(models.Model):
         return (f"    {field_name} = fields.One2many("
                 f"comodel_name='{comodel_name}', "
                 f"inverse_name='{inverse_name}', "
-            f"domain={domain}, "
-            f"context={context}, "
-            f"auto_join={auto_join}, "
-            f"string='{field.get('string')}')\n")
+                f"domain={domain}, "
+                f"context={context}, "
+                f"auto_join={auto_join}, "
+                f"string='{field.get('string')}')\n")
+
     def add_many2many(self, field):
         field_name = field['name']
         comodel_name = field.get('options', ['model.related'])[0]
@@ -127,12 +134,12 @@ class {self.model_name.replace('.', '_').capitalize()}(models.Model):
         return (f"    {field_name} = fields.Many2many("
                 f"{', '.join(parameters)}, "
                 f"string='{field.get('string')}'"
-                f")\n")   
-    # Other field methods...
+                f")\n")
+
     def add_float(self, field):
         field_name = field['name']
         return f"    {field_name} = fields.Float(string='{field.get('string')}', default={field.get('default', 0)}, readonly={field.get('readonly', False)}, required={field.get('required', False)})\n"
-   
+
     def add_text(self, field):
         field_name = field['name']
         return (
@@ -143,7 +150,7 @@ class {self.model_name.replace('.', '_').capitalize()}(models.Model):
             f"required={field.get('required', False)}"
             f")\n"
         )
-   
+
     def add_char(self, field):
         field_name = field['name']
         return (
@@ -154,6 +161,7 @@ class {self.model_name.replace('.', '_').capitalize()}(models.Model):
             f"required={field.get('required', False)}"
             f")\n"
         )
+
     def add_integer(self, field):
         field_name = field['name']
         return f"    {field_name} = fields.Integer(string='{field.get('string')}', default={field.get('default', 0)}, readonly={field.get('readonly', False)}, required={field.get('required', False)})\n"
@@ -179,10 +187,50 @@ class {self.model_name.replace('.', '_').capitalize()}(models.Model):
         field_name = field['name']
         return f"    {field_name} = fields.Datetime(string='{field.get('string')}', readonly={field.get('readonly', False)})\n"
 
+    def add_access_rights(self, model_name, access_rights):
+        """Generate access rights for the new model."""
+        access_rows = []
+        for access in access_rights:
+            group = access.get('group', 'base.group_user')  # Default group
+            access_rows.append([
+                f"access_{model_name}_{access['name']}",
+                group,
+                f"{access['name'].capitalize()} Access",
+                access.get('read', 0),
+                access.get('write', 0),
+                access.get('create', 0),
+                access.get('unlink', 0)
+            ])
+        return access_rows
+
+    def write_access_rights_file(self, access_rows):
+        access_file_path = os.path.join(self.module_path, 'security', 'ir.model.access.csv')
+        header = ["id", "group_id", "name", "perm_read", "perm_write", "perm_create", "perm_unlink"]
+
+        # Check if the file exists and has content
+        if os.path.exists(access_file_path):
+            with open(access_file_path, newline='', mode='r') as access_file:
+                reader = csv.reader(access_file)
+                existing_header = next(reader)
+
+                # Check if headers match regardless of order
+                if set(existing_header) != set(header):
+                    print(f"Warning: Header mismatch in {access_file_path}. Writing new header.")
+                    access_file.seek(0)  # Reset cursor to beginning
+                    access_file.truncate()  # Clear the file
+                    writer = csv.writer(access_file)
+                    writer.writerow(header)
+
+        # Append new access rights
+        with open(access_file_path, mode='a', newline='') as access_file:
+            writer = csv.writer(access_file)
+            writer.writerows(access_rows)
+
+        print(f"Access rights updated in: {access_file_path}")
+    
     def update_init_file(self, model_file_name):
         init_file_path = os.path.join(self.module_path, 'models', '__init__.py')
         with open(init_file_path, 'a') as init_file:
             init_file.write(f"\nfrom . import {model_file_name[:-3]}\n")
         
         print(f"Updated __init__.py to import: {model_file_name[:-3]}")
-
