@@ -10,16 +10,24 @@ class OdooReportGenerator:
 
     def create_report_file(self):
         report_file_name = f"{self.module_name}_report_{self.model_name.replace('.', '_')}.xml"
-        report_file_path = os.path.join(self.module_path, 'reports', report_file_name)
+        reports_directory = os.path.join(self.module_path, 'reports')
+        report_file_path = os.path.join(reports_directory, report_file_name)
 
+        # Generate the report content
         self.generate_report_content()
 
+        # Ensure the reports directory exists
+        os.makedirs(reports_directory, exist_ok=True)
+
+        # Write the XML content to the report file
         with open(report_file_path, 'w') as report_file:
             report_file.write(self.xml_content)
 
         print(f"Report file created: {report_file_path}")
-        self.update_manifest_file(report_file_name)
 
+        # Update the manifest file with the new report
+        self.update_manifest_file(report_file_name)
+    
     def generate_report_content(self):
         self.xml_content += "<odoo>\n"
         
@@ -67,7 +75,7 @@ class OdooReportGenerator:
         if 'data' in manifest_dict:
             # Add the report file to the existing data list if not already present
             if report_file_name not in manifest_dict['data']:
-                manifest_dict['data'].append(report_file_name)
+                manifest_dict['data'].append('reports/'+report_file_name)
         else:
             # Create the 'data' key if it doesn't exist
             manifest_dict['data'] = [report_file_name]

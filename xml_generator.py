@@ -1,5 +1,5 @@
 import os
-import json
+import ast
 import argparse
 
 class OdooXMLGenerator:
@@ -75,17 +75,28 @@ class OdooXMLGenerator:
 """
         self.xml_content += "</odoo>\n"
 
-    def update_manifest_file(self, xml_file_name):
+   
+    def update_manifest_file(self, report_file_name):
         manifest_file_path = os.path.join(self.module_path, '__manifest__.py')
+
+        # Load the current manifest as a dictionary
         with open(manifest_file_path, 'r') as manifest_file:
-            manifest = manifest_file.read()
+            manifest_content = manifest_file.read()
+        
+        # Convert the manifest string to a dictionary
+        manifest_dict = ast.literal_eval(manifest_content)
 
-        if 'data' in manifest:
-            manifest = manifest.replace('data = [', f"data = [\n    '{xml_file_name}',")
+        # Check if 'data' key exists
+        if 'data' in manifest_dict:
+            # Add the report file to the existing data list if not already present
+            if report_file_name not in manifest_dict['data']:
+                manifest_dict['data'].append('views/'+report_file_name)
         else:
-            manifest = manifest.replace('\'depends\': [', f"    'data': [\n        '{xml_file_name}',\n    ],\n    'depends': [")
+            # Create the 'data' key if it doesn't exist
+            manifest_dict['data'] = [report_file_name]
 
+        # Write the updated manifest back to the file
         with open(manifest_file_path, 'w') as manifest_file:
-            manifest_file.write(manifest)
+            manifest_file.write(str(manifest_dict).replace("'", "\"") + "\n")  # Convert dict back to string with double quotes
 
-        print(f"Updated __manifest__.py to include: {xml_file_name}")
+        print(f"Updated __manifest__.py to include: {report_file_name}")

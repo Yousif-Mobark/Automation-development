@@ -122,5 +122,24 @@
             "string": "Start DateTime",
             "help": "The starting date and time."
         }
-    ]
+    ],
+    "access_rights": [
+        {
+            "name": "user",
+            "group": "base.group_user",
+            "read": 1,
+            "write": 1,
+            "create": 1,
+            "unlink": 1
+        },
+        {
+            "name": "manager",
+            "group": "base.group_system",
+            "read": 1,
+            "write": 1,
+            "create": 1,
+            "unlink": 1
+        }
+    ],
+    "report": true  
 }

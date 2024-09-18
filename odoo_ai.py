@@ -3,6 +3,7 @@ import json
 import argparse
 from odoo_model import OdooModelCreator
 from odoo_report import OdooReportGenerator
+from xml_generator import OdooXMLGenerator
 
 def print_documentation():
     print("\n### JSON Structure Documentation ###")
@@ -42,6 +43,7 @@ def main(data_file, module_path):
     model_name = data.get('model_name')
     fields = data.get('fields')
     report_enabled = data.get('report', False)  # Default to False if not present
+    views_enabled = data.get('views', True)  # Default to False if not present
 
     if not model_name or not isinstance(fields, list):
         print("Error: 'model_name' must be a string and 'fields' must be a list.")
@@ -51,7 +53,9 @@ def main(data_file, module_path):
     # Create model file
     model_creator = OdooModelCreator(model_name, fields, module_path)
     model_creator.create_model_file()
-
+    if views_enabled:
+        views_generator = OdooXMLGenerator(model_name, fields, module_path)
+        views_generator.create_xml_file()
     # If report is enabled, initialize the report generator
     if report_enabled:
         report_generator = OdooReportGenerator(model_name, data.get('module_name', 'your_module_name'), module_path)
