@@ -44,6 +44,7 @@ def main(data_file, module_path):
     fields = data.get('fields')
     report_enabled = data.get('report', False)  # Default to False if not present
     views_enabled = data.get('views', True)  # Default to False if not present
+    access_rights = data.get('access_rights', [])
 
     if not model_name or not isinstance(fields, list):
         print("Error: 'model_name' must be a string and 'fields' must be a list.")
@@ -52,7 +53,7 @@ def main(data_file, module_path):
 
     # Create model file
     model_creator = OdooModelCreator(model_name, fields, module_path)
-    model_creator.create_model_file()
+    model_creator.create_model_file(access_rights=access_rights)
     if views_enabled:
         views_generator = OdooXMLGenerator(model_name, fields, module_path)
         views_generator.create_xml_file()

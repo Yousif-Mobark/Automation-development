@@ -204,8 +204,18 @@ class {self.model_name.replace('.', '_').capitalize()}(models.Model):
         return access_rows
 
     def write_access_rights_file(self, access_rows):
-        access_file_path = os.path.join(self.module_path, 'security', 'ir.model.access.csv')
+        # Define the access file name and directory
+        access_file_name = "ir.model.access.csv"
+        security_directory = os.path.join(self.module_path, 'security')
+        
+        # Construct the full file path for the access rights file
+        access_file_path = os.path.join(security_directory, access_file_name)
+        
+        # Define the header for the CSV file
         header = ["id", "group_id", "name", "perm_read", "perm_write", "perm_create", "perm_unlink"]
+
+        # Ensure the security directory exists
+        os.makedirs(security_directory, exist_ok=True)
 
         # Check if the file exists and has content
         if os.path.exists(access_file_path):
@@ -216,18 +226,25 @@ class {self.model_name.replace('.', '_').capitalize()}(models.Model):
                 # Check if headers match regardless of order
                 if set(existing_header) != set(header):
                     print(f"Warning: Header mismatch in {access_file_path}. Writing new header.")
+                    # Clear the file and write the new header
                     access_file.seek(0)  # Reset cursor to beginning
                     access_file.truncate()  # Clear the file
                     writer = csv.writer(access_file)
                     writer.writerow(header)
+
+        else:
+            # If the file does not exist, create it and write the header
+            with open(access_file_path, mode='w', newline='') as access_file:
+                writer = csv.writer(access_file)
+                writer.writerow(header)
 
         # Append new access rights
         with open(access_file_path, mode='a', newline='') as access_file:
             writer = csv.writer(access_file)
             writer.writerows(access_rows)
 
-        print(f"Access rights updated in: {access_file_path}")
-    
+        print(f"Access rights updated in: {access_file_path}")  
+        
     def update_init_file(self, model_file_name):
         init_file_path = os.path.join(self.module_path, 'models', '__init__.py')
         with open(init_file_path, 'a') as init_file:
